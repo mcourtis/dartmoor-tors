@@ -17,6 +17,7 @@ doubted itself.
 
 ## Planned upgrades
 
+- [ ] Click to add tors completion (although this should only be served by me)
 - [ ] Strava API integration — overlay a personal heatmap of routes/visits
 - [ ] Photos and descriptions for each tor, pulled from reference sources
 - [ ] More dynamic filtering (by difficulty, height, region, etc.)
