@@ -1,23 +1,15 @@
-// =============================================================================
-// PLACEHOLDER — NOT YET IMPLEMENTED
-//
 // Serverless function: receives Strava's OAuth callback, exchanges the
-// authorisation code for access + refresh tokens, and stores them securely.
+// authorisation code for tokens, and stores the refresh token in an
+// encrypted, HTTP-only session cookie (see api/_lib/session.js).
 //
 // Required environment variables:
 //   STRAVA_CLIENT_ID
 //   STRAVA_CLIENT_SECRET  — never expose this in browser JavaScript
-//   STRAVA_REDIRECT_URI
-//   TOKEN_STORE_SECRET    — used to sign the session cookie (e.g. a random 32-byte hex string)
-//
-// Security notes:
-//   - Store the refresh token server-side only (database, KV store, encrypted cookie).
-//   - Return a short-lived, HTTP-only session cookie to the browser — not the raw tokens.
-//   - Never send access_token or refresh_token to the frontend.
-//
-// After a successful exchange, redirect the browser back to the frontend:
-//   res.redirect('https://mcourtis.github.io/dartmoor-tors/')
-// =============================================================================
+//   TOKEN_STORE_SECRET    — 32-byte hex string used to encrypt the session cookie
+//   FRONTEND_URL          — where to redirect after a successful exchange
+//                           (defaults to https://mcourtis.github.io)
+
+const { buildSessionCookie } = require('./_lib/session');
 
 module.exports = async (req, res) => {
   const { code, error } = req.query;
@@ -32,19 +24,25 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // TODO: implement token exchange.
-  // const tokenRes = await fetch('https://www.strava.com/oauth/token', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({
-  //     client_id:     process.env.STRAVA_CLIENT_ID,
-  //     client_secret: process.env.STRAVA_CLIENT_SECRET,
-  //     code,
-  //     grant_type: 'authorization_code',
-  //   }),
-  // });
-  // const tokens = await tokenRes.json();
-  // Store tokens.refresh_token securely, then set a session cookie and redirect.
+  const tokenRes = await fetch('https://www.strava.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: process.env.STRAVA_CLIENT_ID,
+      client_secret: process.env.STRAVA_CLIENT_SECRET,
+      code,
+      grant_type: 'authorization_code',
+    }),
+  });
 
-  res.status(501).json({ error: '[PLACEHOLDER] strava-callback: not yet implemented.' });
+  if (!tokenRes.ok) {
+    res.status(502).json({ error: 'Strava token exchange failed.' });
+    return;
+  }
+
+  const tokens = await tokenRes.json();
+  const frontendUrl = process.env.FRONTEND_URL || 'https://mcourtis.github.io/dartmoor-tors/';
+
+  res.setHeader('Set-Cookie', buildSessionCookie(tokens.refresh_token));
+  res.redirect(frontendUrl);
 };
