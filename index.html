@@ -6,6 +6,7 @@
   <title>Dartmoor Tors</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -44,13 +45,8 @@
       <input type="search" id="search" placeholder="Search by name…">
       <ul id="list"></ul>
 
-      <!--
-        PLACEHOLDER: Strava integration
-        Uncomment once the api/ backend is deployed and API_BASE is set in src/strava.js.
-
-        <h2 style="margin-top:20px;">Strava</h2>
-        <button id="connect-strava" type="button">Connect Strava</button>
-      -->
+      <h2 style="margin-top:20px;">Strava</h2>
+      <button id="connect-strava" class="btn" type="button">Connect Strava</button>
     </div>
   </div>
 </div>

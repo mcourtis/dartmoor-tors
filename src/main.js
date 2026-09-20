@@ -29,27 +29,18 @@ if (torParam) {
   if (tor) zoomToTor(map, layer, markers, tor);
 }
 
-// =============================================================================
-// PLACEHOLDER: Strava integration
-// Uncomment once the api/ backend is deployed and src/strava.js is configured.
-//
-// import { connectStrava, getActivities } from './strava.js';
-//
-// const stravaBtn = document.querySelector('#connect-strava');
-// if (stravaBtn) {
-//   stravaBtn.addEventListener('click', connectStrava);
-// }
-//
-// async function loadStravaActivities() {
-//   try {
-//     const activities = await getActivities();
-//     // TODO: render route polylines or activity markers onto `map`.
-//     console.log('Strava activities loaded:', activities.length);
-//   } catch (err) {
-//     console.error('Strava error:', err);
-//   }
-// }
-// =============================================================================
+// Strava integration — set API_BASE in src/strava.js once the api/ backend
+// is deployed. Until then, connecting will fail with a logged fetch error.
+import { connectStrava, getActivities, renderHeatmap } from './strava.js';
+
+const stravaBtn = document.querySelector('#connect-strava');
+if (stravaBtn) {
+  stravaBtn.addEventListener('click', connectStrava);
+}
+
+getActivities()
+  .then(points => { if (points) renderHeatmap(map, points); })
+  .catch(err => console.error('Strava error:', err));
 
 doRenderList('');
 doApplyFilters();

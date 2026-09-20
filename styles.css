@@ -143,6 +143,18 @@ input[type=search] {
 #list .h-name { display: block; font-weight: 600; }
 #list .h-meta { display: block; font-size: 0.75rem; color: var(--granite); }
 
+.btn {
+  background: var(--moor-brown);
+  color: var(--cream);
+  border: none;
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn:hover { opacity: 0.9; }
+
 .leaflet-popup-content-wrapper { border-radius: 4px; }
 .leaflet-popup-content { font-size: 0.85rem; margin: 10px 12px; }
 .popup-title { font-weight: 700; margin-bottom: 2px; }

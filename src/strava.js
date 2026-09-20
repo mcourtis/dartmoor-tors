@@ -1,51 +1,37 @@
-// =============================================================================
-// PLACEHOLDER — NOT YET IMPLEMENTED
-//
-// This module handles browser-side Strava calls. It delegates all OAuth and
-// token logic to the backend (api/ directory) — the client secret must never
-// appear in browser JavaScript.
-//
-// Before activating:
-//   1. Deploy the three functions in api/ to Vercel, Netlify, or similar.
-//   2. Set API_BASE below to the deployed backend root URL.
-//   3. Uncomment the Strava button in index.html.
-//   4. Uncomment the Strava block in src/main.js.
+/* global L */
+// Browser-side Strava calls. Delegates all OAuth and token logic to the
+// backend (api/ directory) — the client secret must never appear in browser
+// JavaScript.
 //
 // OAuth flow:
-//   Browser → /strava/authorize → Strava consent → /strava/callback
-//   → backend exchanges code for tokens → browser receives session cookie
-//   → browser calls /strava/activities → backend fetches from Strava API
-// =============================================================================
+//   Browser -> /api/strava-authorize -> Strava consent -> /api/strava-callback
+//   -> backend exchanges code for tokens -> browser receives session cookie
+//   -> browser calls /api/strava-activities -> backend fetches from Strava API
+//
+// Paths match Vercel's default file-based routing (api/strava-callback.js ->
+// /api/strava-callback) rather than a prettier /strava/... shape, so no
+// vercel.json rewrite is needed.
 
-// Replace with the URL of your deployed backend.
+// Replace with the URL of your deployed backend (e.g. a Vercel project root).
 const API_BASE = 'https://your-api.example.com';
 
 export function connectStrava() {
-  throw new Error('[PLACEHOLDER] connectStrava: set API_BASE and deploy api/strava-authorize.js first.');
-  // Uncomment once backend is live:
-  // window.location.href = `${API_BASE}/strava/authorize`;
+  window.location.href = `${API_BASE}/api/strava-authorize`;
 }
 
+// Returns null if the browser isn't connected to Strava yet (expected for
+// most visitors) rather than throwing, so callers don't need to special-case it.
 export async function getActivities() {
-  throw new Error('[PLACEHOLDER] getActivities: set API_BASE and deploy api/strava-activities.js first.');
-  // Uncomment once backend is live:
-  // const response = await fetch(`${API_BASE}/strava/activities`, { credentials: 'include' });
-  // if (!response.ok) throw new Error('Unable to load Strava activities');
-  // return response.json();
+  const response = await fetch(`${API_BASE}/api/strava-activities`, { credentials: 'include' });
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Unable to load Strava activities');
+  const { points } = await response.json();
+  return points;
 }
 
-// Called by main.js once getActivities() returns data.
-// Decodes Strava's encoded polyline format before handing coordinates to Leaflet.
-export function addActivityToMap(_map, _activity) {
-  throw new Error('[PLACEHOLDER] addActivityToMap: implement polyline decoding and add Leaflet layer.');
-  // Rough shape of the implementation:
-  //
-  // import { decodePolyline } from './polyline.js'; // add a small decoder utility
-  //
-  // const coordinates = decodePolyline(_activity.map.summary_polyline);
-  // return L.polyline(coordinates, {
-  //   color: '#b5482f',
-  //   weight: 3,
-  //   opacity: 0.7,
-  // }).addTo(_map);
+// Renders accumulated [lat, lon] points as a heat layer. Requires
+// leaflet.heat to be loaded (see index.html). Returns the layer so callers
+// can remove/toggle it later.
+export function renderHeatmap(map, points) {
+  return L.heatLayer(points, { radius: 18, blur: 22, maxZoom: 14 }).addTo(map);
 }
