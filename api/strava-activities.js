@@ -1,5 +1,5 @@
 // Serverless function: returns a flat list of [lat, lon] points, clipped to
-// Dartmoor, accumulated from the athlete's Run/TrailRun/Hike activities.
+// Dartmoor, accumulated from the athlete's Run/TrailRun/Hike/Walk activities.
 // The browser renders these as a leaflet.heat layer (see src/strava.js).
 //
 // Pipeline: activities -> sport_type filter -> spatial pre-filter (bbox on
@@ -18,7 +18,7 @@
 const { readSessionCookie, buildSessionCookie, corsHeaders } = require('./_lib/session');
 const { isInBbox } = require('./_lib/bbox');
 
-const SPORT_TYPES = new Set(['Run', 'TrailRun', 'Hike']);
+const SPORT_TYPES = new Set(['Run', 'TrailRun', 'Hike', 'Walk']);
 const MAX_STREAM_REQUESTS = 50; // stay well within the 15-minute rate limit per page load
 
 async function refreshAccessToken(refreshToken) {
@@ -36,14 +36,17 @@ async function refreshAccessToken(refreshToken) {
   return res.json();
 }
 
-function isCandidate(activity) {
-  if (!SPORT_TYPES.has(activity.sport_type)) return false;
+function candidacy(activity) {
+  if (!SPORT_TYPES.has(activity.sport_type)) return 'wrong_sport_type';
   const [startLat, startLon] = activity.start_latlng || [];
   const [endLat, endLon] = activity.end_latlng || [];
-  return (
-    (startLat !== undefined && isInBbox(startLat, startLon)) ||
-    (endLat !== undefined && isInBbox(endLat, endLon))
-  );
+  const inBbox = (startLat !== undefined && isInBbox(startLat, startLon)) ||
+    (endLat !== undefined && isInBbox(endLat, endLon));
+  return inBbox ? 'candidate' : 'outside_bbox';
+}
+
+function isCandidate(activity) {
+  return candidacy(activity) === 'candidate';
 }
 
 async function fetchStreamPoints(activityId, accessToken) {
@@ -89,7 +92,8 @@ module.exports = async (req, res) => {
   }
 
   const activities = await activitiesRes.json();
-  const candidates = activities.filter(isCandidate).slice(0, MAX_STREAM_REQUESTS);
+  const allCandidates = activities.filter(isCandidate);
+  const candidates = allCandidates.slice(0, MAX_STREAM_REQUESTS);
 
   const points = [];
   for (const activity of candidates) {
@@ -98,5 +102,22 @@ module.exports = async (req, res) => {
   }
 
   res.setHeader('Cache-Control', 'private, no-store');
+
+  if (req.query.debug) {
+    res.status(200).json({
+      points,
+      debug: {
+        fetched: activities.length,
+        candidates: allCandidates.length,
+        streamed: candidates.length,
+        droppedByCap: allCandidates.length - candidates.length,
+        excluded: activities
+          .filter(a => !isCandidate(a))
+          .map(a => ({ id: a.id, name: a.name, sport_type: a.sport_type, reason: candidacy(a) })),
+      },
+    });
+    return;
+  }
+
   res.status(200).json({ points });
 };

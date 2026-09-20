@@ -12,8 +12,9 @@
 // /api/strava-callback) rather than a prettier /strava/... shape, so no
 // vercel.json rewrite is needed.
 
-// Replace with the URL of your deployed backend (e.g. a Vercel project root).
-const API_BASE = 'https://your-api.example.com';
+// Empty string: frontend and api/ are served from the same origin under
+// both `vercel dev` and a real Vercel deployment.
+const API_BASE = '';
 
 export function connectStrava() {
   window.location.href = `${API_BASE}/api/strava-authorize`;
