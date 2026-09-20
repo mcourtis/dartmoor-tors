@@ -58,9 +58,9 @@ function readSessionCookie(req) {
 }
 
 function corsHeaders() {
-  const origin = process.env.FRONTEND_URL || 'https://mcourtis.github.io';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://mcourtis.github.io/dartmoor-tors/';
   return {
-    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Origin': new URL(frontendUrl).origin,
     'Access-Control-Allow-Credentials': 'true',
   };
 }

@@ -41,6 +41,10 @@ module.exports = async (req, res) => {
   }
 
   const tokens = await tokenRes.json();
+  if (!tokens.refresh_token) {
+    res.status(502).json({ error: 'Strava token exchange did not return a refresh token.' });
+    return;
+  }
   const frontendUrl = process.env.FRONTEND_URL || 'https://mcourtis.github.io/dartmoor-tors/';
 
   res.setHeader('Set-Cookie', buildSessionCookie(tokens.refresh_token));

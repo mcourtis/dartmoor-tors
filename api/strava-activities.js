@@ -12,8 +12,8 @@
 //   TOKEN_STORE_SECRET
 //
 // Strava rate limits: 100 requests per 15 minutes, 1000 per day — the
-// response is cached at the edge (Cache-Control) and the number of stream
-// requests per invocation is capped below.
+// response carries per-session data so it isn't edge-cached; the number of
+// stream requests per invocation is capped below to stay within the limit.
 
 const { readSessionCookie, buildSessionCookie, corsHeaders } = require('./_lib/session');
 const { isInBbox } = require('./_lib/bbox');
@@ -97,6 +97,6 @@ module.exports = async (req, res) => {
     points.push(...activityPoints);
   }
 
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+  res.setHeader('Cache-Control', 'private, no-store');
   res.status(200).json({ points });
 };
