@@ -64,6 +64,16 @@ module.exports = async (req, res) => {
   const headers = corsHeaders();
   Object.entries(headers).forEach(([key, value]) => res.setHeader(key, value));
 
+  // Block cross-site browser requests before using the session cookie or
+  // spending Strava API quota. Same-origin GETs may omit Origin, so allow it
+  // when absent; browsers include it on cross-origin fetches.
+  const requestOrigin = req.headers.origin;
+  const allowedOrigin = headers['Access-Control-Allow-Origin'];
+  if (requestOrigin && requestOrigin !== allowedOrigin) {
+    res.status(403).json({ error: 'Forbidden origin.' });
+    return;
+  }
+
   const refreshToken = readSessionCookie(req);
   if (!refreshToken) {
     res.status(401).json({ error: 'Not connected to Strava.' });
