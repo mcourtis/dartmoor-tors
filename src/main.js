@@ -1,11 +1,12 @@
 /* global maplibregl */
 import { buildTors } from './tors.js';
-import { initMap, createMarkerLayer, createMarkers, zoomToTor } from './map.js';
+import { initMap, createMarkerLayer, createMarkers, createHomeMarker, zoomToTor } from './map.js';
 import { applyFilters, updateStats, renderList } from './filters.js';
 import { fetchSheetRows, readCachedSnapshot, writeCachedSnapshot } from './tor-data.js';
 import { RAW_TORS } from '../data/tors.js';
 
 const map = initMap('map');
+createHomeMarker(map);
 const layer = createMarkerLayer(map);
 const listEl = document.getElementById('list');
 const searchEl = document.getElementById('search');

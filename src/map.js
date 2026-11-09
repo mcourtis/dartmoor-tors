@@ -1,4 +1,5 @@
 /* global maplibregl */
+import { HOME_LOCATION } from '../data/locations.js';
 
 let hatchCounter = 0;
 
@@ -103,6 +104,26 @@ export function createMarkers(map, tors) {
     marker.openPopup = () => popup.setLngLat([tor.lon, tor.lat]).addTo(map);
     return marker;
   });
+}
+
+export function createHomeMarker(map) {
+  const element = document.createElement('div');
+  element.className = 'home-marker';
+  element.setAttribute('role', 'img');
+  element.setAttribute('aria-label', 'Home');
+  element.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-6v-6.2h-5V21h-6a.5.5 0 0 1-.5-.5z"/><path class="home-door" d="M10 21v-6.2h4V21"/></svg>';
+
+  const popupContent = document.createElement('div');
+  const title = document.createElement('div');
+  title.className = 'popup-title';
+  title.textContent = HOME_LOCATION.name;
+  popupContent.appendChild(title);
+  const popup = new maplibregl.Popup({ closeButton: true, offset: 18 }).setDOMContent(popupContent);
+
+  return new maplibregl.Marker({ element, anchor: 'bottom' })
+    .setLngLat([HOME_LOCATION.lon, HOME_LOCATION.lat])
+    .setPopup(popup)
+    .addTo(map);
 }
 
 export function zoomToTor(map, markerLayer, markers, tor, zoom = 15) {
