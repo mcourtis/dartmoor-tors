@@ -1,4 +1,3 @@
-/* global L */
 // Browser-side Strava calls. Delegates all OAuth and token logic to the
 // backend (api/ directory) — the client secret must never appear in browser
 // JavaScript.
@@ -30,9 +29,46 @@ export async function getActivities() {
   return points;
 }
 
-// Renders accumulated [lat, lon] points as a heat layer. Requires
-// leaflet.heat to be loaded (see index.html). Returns the layer so callers
-// can remove/toggle it later.
+// Renders accumulated [lat, lon] points as a MapLibre heatmap layer.
 export function renderHeatmap(map, points) {
-  return L.heatLayer(points, { radius: 18, blur: 22, maxZoom: 14 }).addTo(map);
+  const addHeatmap = () => {
+    const data = {
+      type: 'FeatureCollection',
+      features: points.map(([lat, lon]) => ({
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Point', coordinates: [lon, lat] },
+      })),
+    };
+
+    if (map.getSource('strava-heat')) {
+      map.getSource('strava-heat').setData(data);
+      return;
+    }
+
+    map.addSource('strava-heat', { type: 'geojson', data });
+    map.addLayer({
+      id: 'strava-heat',
+      type: 'heatmap',
+      source: 'strava-heat',
+      maxzoom: 14,
+      paint: {
+        'heatmap-radius': 18,
+        'heatmap-blur': 22,
+        'heatmap-opacity': 0.72,
+        'heatmap-weight': 1,
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.5, 14, 1.5],
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(63, 122, 82, 0)',
+          0.2, 'rgba(63, 122, 82, 0.35)',
+          0.5, 'rgba(181, 72, 47, 0.65)',
+          1, 'rgba(181, 72, 47, 0.9)',
+        ],
+      },
+    });
+  };
+
+  if (map.isStyleLoaded()) addHeatmap();
+  else map.once('load', addHeatmap);
 }

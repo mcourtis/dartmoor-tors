@@ -27,9 +27,13 @@ export function renderList(listEl, tors, onSelect, filterText) {
     .forEach(t => {
       const li = document.createElement('li');
       const modeLabel = t.mode === 'R' ? 'Run' : t.mode === 'H' ? 'Hike' : 'Not done';
-      li.innerHTML =
-        `<span class="h-name">${t.name}</span>` +
-        `<span class="h-meta">${t.height} m · ${modeLabel}${t.lowPrecision ? ' · approx.' : ''}</span>`;
+      const name = document.createElement('span');
+      name.className = 'h-name';
+      name.textContent = t.name;
+      const meta = document.createElement('span');
+      meta.className = 'h-meta';
+      meta.textContent = `${t.height} m · ${modeLabel}${t.lowPrecision ? ' · approx.' : ''}`;
+      li.append(name, meta);
       li.addEventListener('click', () => onSelect(t));
       listEl.appendChild(li);
     });

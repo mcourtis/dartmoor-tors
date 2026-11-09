@@ -43,6 +43,11 @@ header .sub {
   opacity: 0.8;
 }
 
+#tor-data-status {
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
 #stats {
   margin-left: auto;
   font-size: 0.82rem;
@@ -156,8 +161,10 @@ input[type=search] {
 
 .btn:hover { opacity: 0.9; }
 
-.leaflet-popup-content-wrapper { border-radius: 4px; }
-.leaflet-popup-content { font-size: 0.85rem; margin: 10px 12px; }
+.maplibregl-popup-content { border-radius: 4px; font-size: 0.85rem; padding: 10px 12px; }
+.maplibregl-popup-close-button { font-size: 1.1rem; }
+.tor-marker { width: 18px; height: 17px; cursor: pointer; }
+.tor-marker svg { display: block; width: 18px; height: 17px; }
 .popup-title { font-weight: 700; margin-bottom: 2px; }
 .popup-meta { color: var(--granite); font-size: 0.8rem; }
 .approx-flag { color: var(--run); font-size: 0.75rem; }

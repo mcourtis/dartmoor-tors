@@ -1,7 +1,4 @@
-/* global L */
-// Leaflet is loaded via CDN in index.html and available as the global `L`.
-// When switching to Vite + npm, replace the comment above with:
-//   import L from 'leaflet';
+/* global maplibregl */
 
 let hatchCounter = 0;
 
@@ -18,7 +15,11 @@ function triIcon(tor) {
     const svg = `<svg width="18" height="17" viewBox="0 0 18 17" xmlns="http://www.w3.org/2000/svg">
       <polygon points="9,1 17,16 1,16" fill="${color}"/>
     </svg>`;
-    return L.divIcon({ html: svg, className: '', iconSize: [18, 17], iconAnchor: [9, 16], popupAnchor: [0, -16] });
+    const element = document.createElement('div');
+    element.className = 'tor-marker';
+    element.innerHTML = svg;
+    element.setAttribute('aria-label', tor.name);
+    return element;
   }
 
   // Low-precision tors: hatch the fill so approximate location stays visually distinct
@@ -33,36 +34,79 @@ function triIcon(tor) {
     </defs>
     <polygon points="9,1 17,16 1,16" fill="url(#${uid})" stroke="${color}" stroke-width="0.75"/>
   </svg>`;
-  return L.divIcon({ html: svg, className: '', iconSize: [18, 17], iconAnchor: [9, 16], popupAnchor: [0, -16] });
+  const element = document.createElement('div');
+  element.className = 'tor-marker';
+  element.innerHTML = svg;
+  element.setAttribute('aria-label', tor.name);
+  return element;
 }
 
 export function initMap(elementId) {
-  const map = L.map(elementId, { zoomControl: true }).setView([50.585, -3.97], 11);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    subdomains: 'abcd',
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-  }).addTo(map);
+  const map = new maplibregl.Map({
+    container: elementId,
+    style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json?key=cb1_55nd_1_6d18d9d007ed1373e7668fbd',
+    center: [-3.97, 50.585],
+    zoom: 11,
+  });
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
   return map;
 }
 
-export function createMarkers(tors) {
+export function createMarkerLayer(map) {
+  const active = new Set();
+  return {
+    clearLayers() {
+      active.forEach(marker => marker.remove());
+      active.clear();
+    },
+    addLayer(marker) {
+      if (!active.has(marker)) {
+        marker.addTo(map);
+        active.add(marker);
+      }
+      return this;
+    },
+    hasLayer(marker) {
+      return active.has(marker);
+    },
+  };
+}
+
+export function createMarkers(map, tors) {
   return tors.map(tor => {
     const modeLabel = tor.mode === 'R' ? 'Run' : tor.mode === 'H' ? 'Hike' : 'Not yet done';
-    const marker = L.marker([tor.lat, tor.lon], { icon: triIcon(tor) });
-    marker.bindPopup(
-      `<div class="popup-title">${tor.name}</div>` +
-      `<div class="popup-meta">${tor.height} m · ${modeLabel}</div>` +
-      `<div class="popup-meta">${tor.ref}</div>` +
-      (tor.lowPrecision ? `<div class="approx-flag">Approximate location — grid ref in source data was incomplete</div>` : '')
-    );
+    const content = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'popup-title';
+    title.textContent = tor.name;
+    content.appendChild(title);
+    [
+      `${tor.height} m · ${modeLabel}`,
+      tor.ref,
+    ].forEach(text => {
+      const line = document.createElement('div');
+      line.className = 'popup-meta';
+      line.textContent = text;
+      content.appendChild(line);
+    });
+    if (tor.lowPrecision) {
+      const note = document.createElement('div');
+      note.className = 'approx-flag';
+      note.textContent = 'Approximate location — grid ref in source data was incomplete';
+      content.appendChild(note);
+    }
+    const popup = new maplibregl.Popup({ closeButton: true, offset: 8 }).setDOMContent(content);
+    const marker = new maplibregl.Marker({ element: triIcon(tor), anchor: 'bottom' })
+      .setLngLat([tor.lon, tor.lat])
+      .setPopup(popup);
     marker.tor = tor;
+    marker.openPopup = () => popup.setLngLat([tor.lon, tor.lat]).addTo(map);
     return marker;
   });
 }
 
 export function zoomToTor(map, markerLayer, markers, tor, zoom = 15) {
-  map.setView([tor.lat, tor.lon], zoom);
+  map.flyTo({ center: [tor.lon, tor.lat], zoom, essential: true });
   const marker = markers.find(candidate => candidate.tor === tor);
   if (!marker) return;
   if (!markerLayer.hasLayer(marker)) markerLayer.addLayer(marker);

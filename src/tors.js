@@ -1,8 +1,8 @@
 import { RAW_TORS } from '../data/tors.js';
 import { sxRefToEN, gridXYToEN, toLatLon } from './geo.js';
 
-export function buildTors() {
-  return RAW_TORS.map(row => {
+export function buildTors(rows = RAW_TORS) {
+  return rows.map(row => {
     const [name, ref, height, mode, book, mapCol, gx, gy] = row;
     const lowPrecision = !ref;
     const en = lowPrecision ? gridXYToEN(gx, gy) : sxRefToEN(ref);
